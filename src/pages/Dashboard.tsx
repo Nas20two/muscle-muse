@@ -82,7 +82,7 @@ export default function Dashboard() {
             <div className="w-10 h-10 bg-gradient-energy rounded-xl flex items-center justify-center">
               <Dumbbell className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-display text-2xl energy-text">FITFORGE</span>
+            <span className="font-display text-2xl energy-text">Fit -Forge</span>
           </div>
           <nav className="flex items-center gap-2">
             <Link to="/progress">
