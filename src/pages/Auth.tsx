@@ -71,7 +71,7 @@ export default function Auth() {
             <Dumbbell className="w-8 h-8 text-primary-foreground" />
           </div>
           <div>
-            <CardTitle className="text-4xl energy-text">FITFORGE</CardTitle>
+            <CardTitle className="text-4xl energy-text">Fit -Forge</CardTitle>
             <CardDescription className="text-base mt-2">
               {isLogin ? "Welcome back, warrior" : "Begin your transformation"}
             </CardDescription>
