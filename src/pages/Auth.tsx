@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Dumbbell, Mail, Lock, Loader2, ArrowLeft } from "lucide-react";
+import { Dumbbell, Mail, Lock, Loader2, ArrowLeft, User } from "lucide-react";
 
 export default function Auth() {
   const [searchParams] = useSearchParams();
@@ -13,6 +13,7 @@ export default function Auth() {
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
   const { user, signIn, signUp, signInWithGoogle, resetPassword } = useAuth();
   const { toast } = useToast();
@@ -23,11 +24,21 @@ export default function Auth() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!isLogin && displayName.trim().length < 2) {
+      toast({
+        title: "Error",
+        description: "Display name must be at least 2 characters.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     const { error } = isLogin
       ? await signIn(email, password)
-      : await signUp(email, password);
+      : await signUp(email, password, displayName.trim());
 
     if (error) {
       toast({
@@ -38,9 +49,8 @@ export default function Auth() {
     } else if (!isLogin) {
       toast({
         title: "Account created!",
-        description: "You can now log in with your credentials.",
+        description: "Let's set up your workout schedule.",
       });
-      setIsLogin(true);
     }
 
     setLoading(false);
@@ -146,7 +156,23 @@ export default function Auth() {
               </button>
             </form>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+              {!isLogin && (
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Display Name"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    className="pl-10"
+                    required
+                    minLength={2}
+                    maxLength={50}
+                  />
+                </div>
+              )}
+
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
