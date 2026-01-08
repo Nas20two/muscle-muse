@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dumbbell, Calendar, TrendingUp, LogOut, ChevronRight, Target } from "lucide-react";
+import { Dumbbell, Calendar, TrendingUp, LogOut, ChevronRight, Target, Settings } from "lucide-react";
 
 interface WorkoutDay {
   id: string;
@@ -20,29 +20,86 @@ interface WorkoutLog {
   completed_at: string;
 }
 
+interface UserSchedule {
+  schedule_type: "3-day" | "4-day" | "5-day";
+}
+
+interface Profile {
+  display_name: string | null;
+}
+
 export default function Dashboard() {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [workoutDays, setWorkoutDays] = useState<WorkoutDay[]>([]);
   const [recentLogs, setRecentLogs] = useState<WorkoutLog[]>([]);
+  const [userSchedule, setUserSchedule] = useState<UserSchedule | null>(null);
+  const [displayName, setDisplayName] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (user) {
+      fetchData();
+    }
+  }, [user]);
 
   const fetchData = async () => {
-    const [workoutsRes, logsRes] = await Promise.all([
+    if (!user) return;
+
+    const [workoutsRes, logsRes, scheduleRes, profileRes] = await Promise.all([
       supabase.from("workout_days").select("*").order("day_number"),
       supabase
         .from("workout_logs")
         .select("*")
         .order("completed_at", { ascending: false })
         .limit(10),
+      supabase.from("user_schedules").select("schedule_type").eq("user_id", user.id).maybeSingle(),
+      supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle(),
     ]);
 
     if (workoutsRes.data) setWorkoutDays(workoutsRes.data);
     if (logsRes.data) setRecentLogs(logsRes.data);
+    
+    if (scheduleRes.data) {
+      setUserSchedule(scheduleRes.data as UserSchedule);
+    } else {
+      // Redirect to onboarding if no schedule set
+      navigate("/onboarding");
+      return;
+    }
+
+    // Get display name from profile or user metadata
+    const name = profileRes.data?.display_name || 
+      user.user_metadata?.display_name || 
+      user.email?.split("@")[0] || 
+      "Warrior";
+    setDisplayName(name);
+
     setLoading(false);
+  };
+
+  const getFilteredWorkouts = () => {
+    if (!userSchedule) return workoutDays;
+    
+    switch (userSchedule.schedule_type) {
+      case "3-day":
+        return workoutDays.filter(day => [1, 3, 5].includes(day.day_number));
+      case "4-day":
+        return workoutDays.filter(day => [1, 2, 4, 5].includes(day.day_number));
+      case "5-day":
+      default:
+        return workoutDays;
+    }
+  };
+
+  const getScheduleLabel = () => {
+    if (!userSchedule) return "5-Day Split";
+    return `${userSchedule.schedule_type.charAt(0)}-Day Split`;
+  };
+
+  const getWeeklyGoal = () => {
+    if (!userSchedule) return 5;
+    return parseInt(userSchedule.schedule_type.charAt(0));
   };
 
   const getCompletedThisWeek = () => {
@@ -73,6 +130,8 @@ export default function Dashboard() {
     );
   }
 
+  const filteredWorkouts = getFilteredWorkouts();
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -91,6 +150,11 @@ export default function Dashboard() {
                 Progress
               </Button>
             </Link>
+            <Link to="/onboarding">
+              <Button variant="ghost" size="sm">
+                <Settings className="w-4 h-4" />
+              </Button>
+            </Link>
             <Button variant="ghost" size="sm" onClick={signOut}>
               <LogOut className="w-4 h-4" />
             </Button>
@@ -102,10 +166,10 @@ export default function Dashboard() {
         {/* Welcome Section */}
         <section className="mb-8 animate-fade-in">
           <h1 className="font-display text-4xl md:text-5xl mb-2">
-            WELCOME BACK
+            WELCOME BACK, {displayName.toUpperCase()}
           </h1>
           <p className="text-muted-foreground text-lg">
-            {user?.email?.split("@")[0]} • {getCompletedThisWeek()}/5 workouts this week
+            {getCompletedThisWeek()}/{getWeeklyGoal()} workouts this week
           </p>
         </section>
 
@@ -115,7 +179,7 @@ export default function Dashboard() {
             { label: "This Week", value: getCompletedThisWeek(), icon: Calendar },
             { label: "Total", value: recentLogs.length, icon: Target },
             { label: "Streak", value: "—", icon: TrendingUp },
-            { label: "Week Goal", value: "5", icon: Dumbbell },
+            { label: "Week Goal", value: getWeeklyGoal(), icon: Dumbbell },
           ].map((stat, i) => (
             <Card key={i} variant="elevated" className="animate-slide-up" style={{ animationDelay: `${i * 100}ms` }}>
               <CardContent className="p-4 text-center">
@@ -131,11 +195,11 @@ export default function Dashboard() {
         <section>
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-display text-2xl">YOUR SCHEDULE</h2>
-            <span className="workout-badge">5-Day Split</span>
+            <span className="workout-badge">{getScheduleLabel()}</span>
           </div>
 
           <div className="space-y-3">
-            {workoutDays.map((day, index) => (
+            {filteredWorkouts.map((day, index) => (
               <Link key={day.id} to={`/workout/${day.id}`}>
                 <Card
                   variant="elevated"
