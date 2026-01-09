@@ -4,8 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dumbbell, Calendar, TrendingUp, LogOut, ChevronRight, Target, Settings } from "lucide-react";
-
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dumbbell, Calendar, TrendingUp, LogOut, ChevronRight, Target, Settings, User, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 interface WorkoutDay {
   id: string;
   name: string;
@@ -31,11 +33,15 @@ interface Profile {
 export default function Dashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [workoutDays, setWorkoutDays] = useState<WorkoutDay[]>([]);
   const [recentLogs, setRecentLogs] = useState<WorkoutLog[]>([]);
   const [userSchedule, setUserSchedule] = useState<UserSchedule | null>(null);
   const [displayName, setDisplayName] = useState<string>("");
+  const [editName, setEditName] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [savingName, setSavingName] = useState(false);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -74,8 +80,42 @@ export default function Dashboard() {
       user.email?.split("@")[0] || 
       "Warrior";
     setDisplayName(name);
+    setEditName(name);
 
     setLoading(false);
+  };
+
+  const handleUpdateDisplayName = async () => {
+    if (!user || editName.trim().length < 2) {
+      toast({
+        title: "Error",
+        description: "Display name must be at least 2 characters.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSavingName(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ display_name: editName.trim() })
+      .eq("id", user.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update display name. Please try again.",
+        variant: "destructive",
+      });
+    } else {
+      setDisplayName(editName.trim());
+      toast({
+        title: "Success",
+        description: "Your display name has been updated.",
+      });
+      setProfileDialogOpen(false);
+    }
+    setSavingName(false);
   };
 
   const getFilteredWorkouts = () => {
@@ -150,6 +190,41 @@ export default function Dashboard() {
                 Progress
               </Button>
             </Link>
+            <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <User className="w-4 h-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="font-display text-2xl">Edit Profile</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Display Name</label>
+                    <Input
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      placeholder="Enter your display name"
+                      maxLength={50}
+                    />
+                  </div>
+                  <Button
+                    variant="energy"
+                    className="w-full"
+                    onClick={handleUpdateDisplayName}
+                    disabled={savingName || editName.trim().length < 2}
+                  >
+                    {savingName ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      "Save Changes"
+                    )}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
             <Link to="/onboarding">
               <Button variant="ghost" size="sm">
                 <Settings className="w-4 h-4" />
