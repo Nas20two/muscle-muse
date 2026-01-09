@@ -64,10 +64,13 @@ export default function Onboarding() {
     if (!selectedSchedule || !user) return;
 
     setSaving(true);
-    const { error } = await supabase.from("user_schedules").upsert({
-      user_id: user.id,
-      schedule_type: selectedSchedule,
-    });
+    const { error } = await supabase.from("user_schedules").upsert(
+      {
+        user_id: user.id,
+        schedule_type: selectedSchedule,
+      },
+      { onConflict: "user_id" }
+    );
 
     if (error) {
       toast({
