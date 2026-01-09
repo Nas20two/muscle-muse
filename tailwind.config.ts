@@ -18,11 +18,11 @@ export default {
   		}
   	},
   	extend: {
-  		fontFamily: {
-  			display: [
-  				'Bebas Neue',
-  				'sans-serif'
-  			],
+		fontFamily: {
+			display: [
+				'Cinzel',
+				'serif'
+			],
   			sans: [
   				'Inter',
   				'ui-sans-serif',
