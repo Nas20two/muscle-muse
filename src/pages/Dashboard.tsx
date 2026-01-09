@@ -183,16 +183,15 @@ export default function Dashboard() {
             </div>
             <span className="font-display text-2xl energy-text tracking-wide">MUSCLE MUSE</span>
           </div>
-          <nav className="flex items-center gap-2">
+          <nav className="flex items-center gap-1 sm:gap-2">
             <Link to="/progress">
-              <Button variant="ghost" size="sm">
-                <TrendingUp className="w-4 h-4 mr-2" />
-                Progress
+              <Button variant="ghost" size="icon" className="h-9 w-9">
+                <TrendingUp className="w-4 h-4" />
               </Button>
             </Link>
             <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="icon" className="h-9 w-9">
                   <User className="w-4 h-4" />
                 </Button>
               </DialogTrigger>
@@ -226,11 +225,11 @@ export default function Dashboard() {
               </DialogContent>
             </Dialog>
             <Link to="/onboarding">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="icon" className="h-9 w-9">
                 <Settings className="w-4 h-4" />
               </Button>
             </Link>
-            <Button variant="ghost" size="sm" onClick={signOut}>
+            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={signOut}>
               <LogOut className="w-4 h-4" />
             </Button>
           </nav>
