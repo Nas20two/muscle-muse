@@ -106,7 +106,7 @@ export default function Auth() {
             <Dumbbell className="w-8 h-8 text-primary-foreground" />
           </div>
           <div>
-            <CardTitle className="text-4xl energy-text">FIT - FORGE</CardTitle>
+            <CardTitle className="font-display text-4xl energy-text tracking-wide">MUSCLE MUSE</CardTitle>
             <CardDescription className="text-base mt-2">
               {isForgotPassword
                 ? "Reset your password"
