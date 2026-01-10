@@ -111,7 +111,7 @@ export default function Auth() {
               {isForgotPassword
                 ? "Reset your password"
                 : isLogin
-                ? "Warrior"
+                ? "Welcome back - Warrior"
                 : "Begin your transformation"}
             </CardDescription>
           </div>
