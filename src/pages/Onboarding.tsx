@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,6 +47,27 @@ export default function Onboarding() {
   const { toast } = useToast();
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduleType | null>(null);
   const [saving, setSaving] = useState(false);
+  const [displayName, setDisplayName] = useState<string>("Warrior");
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("id", user.id)
+        .maybeSingle();
+      
+      const name = data?.display_name || 
+        user.user_metadata?.display_name || 
+        user.email?.split("@")[0] || 
+        "Warrior";
+      setDisplayName(name);
+    };
+
+    fetchProfile();
+  }, [user]);
 
   if (authLoading) {
     return (
@@ -88,8 +109,6 @@ export default function Onboarding() {
     });
     navigate("/");
   };
-
-  const displayName = user.user_metadata?.display_name || user.email?.split("@")[0] || "Warrior";
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-dark">
