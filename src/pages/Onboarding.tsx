@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Dumbbell, Calendar, Loader2, Check } from "lucide-react";
+import Logo from "@/components/Logo";
 
 type ScheduleType = "3-day" | "4-day" | "5-day";
 
@@ -120,8 +121,8 @@ export default function Onboarding() {
 
       <div className="w-full max-w-2xl animate-scale-in relative">
         <div className="text-center mb-8">
-          <div className="mx-auto w-16 h-16 bg-gradient-energy rounded-2xl flex items-center justify-center shadow-glow mb-4">
-            <Calendar className="w-8 h-8 text-primary-foreground" />
+          <div className="mx-auto flex justify-center mb-4">
+            <Logo size="lg" showText={false} />
           </div>
           <h1 className="font-display text-4xl energy-text mb-2">
             WELCOME, {displayName.toUpperCase()}!
