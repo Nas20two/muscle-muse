@@ -1,17 +1,3 @@
-import {
-  Dumbbell,
-  Calendar,
-  TrendingUp,
-  LogOut,
-  ChevronRight,
-  Target,
-  Settings,
-  User,
-  Loader2,
-  Bell,
-  Coffee,
-  MessageSquare,
-} from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,14 +54,18 @@ export default function Dashboard() {
 
     const [workoutsRes, logsRes, scheduleRes, profileRes] = await Promise.all([
       supabase.from("workout_days").select("*").order("day_number"),
-      supabase.from("workout_logs").select("*").order("completed_at", { ascending: false }).limit(10),
+      supabase
+        .from("workout_logs")
+        .select("*")
+        .order("completed_at", { ascending: false })
+        .limit(10),
       supabase.from("user_schedules").select("schedule_type").eq("user_id", user.id).maybeSingle(),
       supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle(),
     ]);
 
     if (workoutsRes.data) setWorkoutDays(workoutsRes.data);
     if (logsRes.data) setRecentLogs(logsRes.data);
-
+    
     if (scheduleRes.data) {
       setUserSchedule(scheduleRes.data as UserSchedule);
     } else {
@@ -85,8 +75,10 @@ export default function Dashboard() {
     }
 
     // Get display name from profile or user metadata
-    const name =
-      profileRes.data?.display_name || user.user_metadata?.display_name || user.email?.split("@")[0] || "Warrior";
+    const name = profileRes.data?.display_name || 
+      user.user_metadata?.display_name || 
+      user.email?.split("@")[0] || 
+      "Warrior";
     setDisplayName(name);
     setEditName(name);
 
@@ -104,7 +96,10 @@ export default function Dashboard() {
     }
 
     setSavingName(true);
-    const { error } = await supabase.from("profiles").update({ display_name: editName.trim() }).eq("id", user.id);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ display_name: editName.trim() })
+      .eq("id", user.id);
 
     if (error) {
       toast({
@@ -125,12 +120,12 @@ export default function Dashboard() {
 
   const getFilteredWorkouts = () => {
     if (!userSchedule) return workoutDays;
-
+    
     switch (userSchedule.schedule_type) {
       case "3-day":
-        return workoutDays.filter((day) => [1, 3, 5].includes(day.day_number));
+        return workoutDays.filter(day => [1, 3, 5].includes(day.day_number));
       case "4-day":
-        return workoutDays.filter((day) => [1, 2, 4, 5].includes(day.day_number));
+        return workoutDays.filter(day => [1, 2, 4, 5].includes(day.day_number));
       case "5-day":
       default:
         return workoutDays;
@@ -150,7 +145,9 @@ export default function Dashboard() {
   const getCompletedThisWeek = () => {
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
-    return recentLogs.filter((log) => new Date(log.completed_at) >= weekAgo).length;
+    return recentLogs.filter(
+      (log) => new Date(log.completed_at) >= weekAgo
+    ).length;
   };
 
   const getDayLabel = (dayNumber: number) => {
@@ -218,7 +215,11 @@ export default function Dashboard() {
                     onClick={handleUpdateDisplayName}
                     disabled={savingName || editName.trim().length < 2}
                   >
-                    {savingName ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Changes"}
+                    {savingName ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      "Save Changes"
+                    )}
                   </Button>
                 </div>
               </DialogContent>
@@ -238,7 +239,9 @@ export default function Dashboard() {
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Welcome Section */}
         <section className="mb-8 animate-fade-in">
-          <h1 className="font-display text-4xl md:text-5xl mb-2">WELCOME BACK, {displayName.toUpperCase()}</h1>
+          <h1 className="font-display text-4xl md:text-5xl mb-2">
+            WELCOME BACK, {displayName.toUpperCase()}
+          </h1>
           <p className="text-muted-foreground text-lg">
             {getCompletedThisWeek()}/{getWeeklyGoal()} workouts this week
           </p>
@@ -290,7 +293,9 @@ export default function Dashboard() {
                       <h3 className="font-display text-xl group-hover:text-primary transition-colors">
                         {day.name.toUpperCase()}
                       </h3>
-                      <p className="text-sm text-muted-foreground truncate">{day.muscle_groups.join(" • ")}</p>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {day.muscle_groups.join(" • ")}
+                      </p>
                     </div>
                     <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                   </CardContent>
