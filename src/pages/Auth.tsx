@@ -107,7 +107,7 @@ export default function Auth() {
             <Logo size="lg" showText={false} />
           </div>
           <div>
-            <CardTitle className="font-display text-4xl energy-text tracking-wide">MUSCLE<span className="text-primary">MUSE</span></CardTitle>
+            <CardTitle className="font-display text-4xl energy-text tracking-wide">MUSCLE <span className="text-primary">MUSE</span></CardTitle>
             <CardDescription className="text-base mt-2">
               {isForgotPassword
                 ? "Reset your password"
