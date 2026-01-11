@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Dumbbell, Mail, Lock, Loader2, ArrowLeft, User } from "lucide-react";
+import { Mail, Lock, Loader2, ArrowLeft, User } from "lucide-react";
+import Logo from "@/components/Logo";
 
 export default function Auth() {
   const [searchParams] = useSearchParams();
@@ -102,11 +103,11 @@ export default function Auth() {
 
       <Card variant="glass" className="w-full max-w-md animate-scale-in relative">
         <CardHeader className="text-center space-y-4">
-          <div className="mx-auto w-16 h-16 bg-gradient-energy rounded-2xl flex items-center justify-center shadow-glow">
-            <Dumbbell className="w-8 h-8 text-primary-foreground" />
+          <div className="mx-auto">
+            <Logo size="lg" showText={false} />
           </div>
           <div>
-            <CardTitle className="font-display text-4xl energy-text tracking-wide">MUSCLE MUSE</CardTitle>
+            <CardTitle className="font-display text-4xl energy-text tracking-wide">MUSCLE<span className="text-primary">MUSE</span></CardTitle>
             <CardDescription className="text-base mt-2">
               {isForgotPassword
                 ? "Reset your password"
