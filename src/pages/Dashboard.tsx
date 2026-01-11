@@ -6,8 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Dumbbell, Calendar, TrendingUp, LogOut, ChevronRight, Target, Settings, User, Loader2 } from "lucide-react";
+import { Dumbbell, Calendar, TrendingUp, LogOut, ChevronRight, Target, Settings, User, Loader2, Bell, Coffee, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+const FEEDBACK_FORM_URL = "https://docs.google.com/forms/d/1dAQOsawhRdmvRBAMEHrSJSGDK4xWjW4-ygQ6OZjp4FQ/viewform";
+const DONATE_URL = ""; // TODO: Add donation URL
 interface WorkoutDay {
   id: string;
   name: string;
@@ -150,15 +153,7 @@ export default function Dashboard() {
     ).length;
   };
 
-  const getDayLabel = (dayNumber: number) => {
-    const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
-    return days[dayNumber - 1] || `Day ${dayNumber}`;
-  };
-
-  const getMuscleGroupIcon = (groups: string[]) => {
-    if (groups.includes("chest") || groups.includes("shoulders")) return "💪";
-    if (groups.includes("back")) return "🔙";
-    if (groups.includes("quads") || groups.includes("hamstrings")) return "🦵";
+  const getMuscleGroupIcon = () => {
     return "🏋️";
   };
 
@@ -197,30 +192,58 @@ export default function Dashboard() {
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle className="font-display text-2xl">Edit Profile</DialogTitle>
+                  <DialogTitle className="font-display text-2xl">Profile & Support</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Display Name</label>
+                <div className="space-y-6 pt-4">
+                  {/* Display Name Section */}
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Display Name</label>
                     <Input
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       placeholder="Enter your display name"
                       maxLength={50}
                     />
+                    <Button
+                      variant="energy"
+                      className="w-full"
+                      onClick={handleUpdateDisplayName}
+                      disabled={savingName || editName.trim().length < 2}
+                    >
+                      {savingName ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        "Save Changes"
+                      )}
+                    </Button>
                   </div>
-                  <Button
-                    variant="energy"
-                    className="w-full"
-                    onClick={handleUpdateDisplayName}
-                    disabled={savingName || editName.trim().length < 2}
-                  >
-                    {savingName ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      "Save Changes"
-                    )}
-                  </Button>
+
+                  {/* Divider */}
+                  <div className="border-t border-border" />
+
+                  {/* App Support Section */}
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium uppercase tracking-wider text-muted-foreground">App Support</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button
+                        variant="outline"
+                        className="flex items-center gap-2"
+                        onClick={() => window.open(FEEDBACK_FORM_URL, "_blank")}
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                        Send Feedback
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="flex items-center gap-2"
+                        onClick={() => DONATE_URL && window.open(DONATE_URL, "_blank")}
+                        disabled={!DONATE_URL}
+                      >
+                        <Coffee className="w-4 h-4" />
+                        Donate a coffee
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </DialogContent>
             </Dialog>
@@ -247,15 +270,32 @@ export default function Dashboard() {
           </p>
         </section>
 
+        {/* Message Board */}
+        <section className="mb-8 animate-slide-up" style={{ animationDelay: "100ms" }}>
+          <Card variant="elevated" className="border-amber-500/30 bg-amber-500/5">
+            <CardContent className="p-4 flex gap-4">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                <Bell className="w-5 h-5 text-amber-500" />
+              </div>
+              <div>
+                <h3 className="font-display text-sm text-amber-500 uppercase tracking-wider mb-1">Latest Updates</h3>
+                <p className="text-sm text-foreground/90">
+                  Muscle Muse is now live! I've added a new 'Progress' tab to track your journey. Have a feature idea? Use the feedback button in your profile!
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
         {/* Stats Cards */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
             { label: "This Week", value: getCompletedThisWeek(), icon: Calendar },
             { label: "Total", value: recentLogs.length, icon: Target },
             { label: "Streak", value: "—", icon: TrendingUp },
-            { label: "Week Goal", value: getWeeklyGoal(), icon: Dumbbell },
+            { label: "Goal", value: getWeeklyGoal(), icon: Dumbbell },
           ].map((stat, i) => (
-            <Card key={i} variant="elevated" className="animate-slide-up" style={{ animationDelay: `${i * 100}ms` }}>
+            <Card key={i} variant="elevated" className="animate-slide-up" style={{ animationDelay: `${(i + 2) * 100}ms` }}>
               <CardContent className="p-4 text-center">
                 <stat.icon className="w-5 h-5 mx-auto mb-2 text-primary" />
                 <p className="font-display text-3xl">{stat.value}</p>
@@ -282,14 +322,9 @@ export default function Dashboard() {
                 >
                   <CardContent className="p-4 flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center text-2xl group-hover:bg-primary/20 transition-colors">
-                      {getMuscleGroupIcon(day.muscle_groups)}
+                      {getMuscleGroupIcon()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-medium text-primary uppercase tracking-wider">
-                          {getDayLabel(day.day_number)}
-                        </span>
-                      </div>
                       <h3 className="font-display text-xl group-hover:text-primary transition-colors">
                         {day.name.toUpperCase()}
                       </h3>
