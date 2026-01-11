@@ -172,7 +172,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-xl sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="container mx-auto px-5 sm:px-6 py-4 flex items-center justify-between">
           <Logo size="sm" />
           <nav className="flex items-center gap-1 sm:gap-2">
             <Link to="/progress">
@@ -255,10 +255,10 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
+      <main className="container mx-auto px-5 sm:px-6 py-8 max-w-4xl">
         {/* Welcome Section */}
         <section className="mb-8 animate-fade-in">
-          <h1 className="font-display text-4xl md:text-5xl mb-2">
+          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl mb-2 break-words">
             WELCOME BACK, {displayName.toUpperCase()}
           </h1>
           <p className="text-muted-foreground text-lg">
