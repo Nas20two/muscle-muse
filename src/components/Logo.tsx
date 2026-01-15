@@ -1,28 +1,29 @@
 interface LogoProps {
   size?: "sm" | "md" | "lg";
   showText?: boolean;
+  hideTextOnMobile?: boolean;
 }
 
 const sizeConfig = {
-  sm: { icon: 40, text: "text-2xl" },
-  md: { icon: 48, text: "text-3xl" },
-  lg: { icon: 64, text: "text-4xl" },
+  sm: { icon: 32, iconMobile: 28, text: "text-xl sm:text-2xl" },
+  md: { icon: 48, iconMobile: 40, text: "text-2xl sm:text-3xl" },
+  lg: { icon: 64, iconMobile: 56, text: "text-3xl sm:text-4xl" },
 };
 
-export default function Logo({ size = "md", showText = true }: LogoProps) {
+export default function Logo({ size = "md", showText = true, hideTextOnMobile = false }: LogoProps) {
   const config = sizeConfig[size];
   
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2 sm:gap-3">
       <div 
-        className="flex items-center justify-center"
-        style={{ width: config.icon, height: config.icon }}
+        className="flex items-center justify-center shrink-0"
+        style={{ width: config.iconMobile, height: config.iconMobile }}
       >
         <svg 
           viewBox="0 0 40 40" 
           fill="none" 
           xmlns="http://www.w3.org/2000/svg" 
-          className="w-full h-full drop-shadow-sm"
+          className="w-full h-full drop-shadow-sm sm:w-[120%] sm:h-[120%]"
         >
           {/* Background Rounded Square */}
           <rect width="40" height="40" rx="10" fill="url(#energy-gradient)" />
@@ -45,7 +46,7 @@ export default function Logo({ size = "md", showText = true }: LogoProps) {
         </svg>
       </div>
       {showText && (
-        <span className={`font-display ${config.text} font-bold tracking-tight text-foreground`}>
+        <span className={`font-display ${config.text} font-bold tracking-tight text-foreground ${hideTextOnMobile ? 'hidden xs:inline' : ''}`}>
           MUSCLE<span className="text-primary">MUSE</span>
         </span>
       )}
