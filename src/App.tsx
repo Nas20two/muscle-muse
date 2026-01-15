@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import WorkoutDetail from "./pages/WorkoutDetail";
 import Progress from "./pages/Progress";
 import Onboarding from "./pages/Onboarding";
+import Inspiration from "./pages/Inspiration";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -64,6 +65,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Onboarding />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inspiration"
+        element={
+          <ProtectedRoute>
+            <Inspiration />
           </ProtectedRoute>
         }
       />

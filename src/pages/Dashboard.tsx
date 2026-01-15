@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Dumbbell, Calendar, TrendingUp, LogOut, ChevronRight, Target, Settings, User, Loader2, Bell, Coffee, MessageSquare } from "lucide-react";
+import { Dumbbell, Calendar, TrendingUp, LogOut, ChevronRight, Target, Settings, User, Loader2, Bell, Coffee, MessageSquare, Sparkles } from "lucide-react";
 import Logo from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
 
@@ -175,6 +175,11 @@ export default function Dashboard() {
         <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <Logo size="sm" />
           <nav className="flex items-center gap-0.5 sm:gap-2">
+            <Link to="/inspiration">
+              <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
+                <Sparkles className="w-4 h-4" />
+              </Button>
+            </Link>
             <Link to="/progress">
               <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
                 <TrendingUp className="w-4 h-4" />
