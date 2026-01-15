@@ -46,7 +46,7 @@ export default function Logo({ size = "md", showText = true, hideTextOnMobile = 
         </svg>
       </div>
       {showText && (
-        <span className={`font-display ${config.text} font-bold tracking-tight text-foreground ${hideTextOnMobile ? 'hidden xs:inline' : ''}`}>
+        <span className={`font-display ${config.text} font-bold tracking-tight text-foreground ${hideTextOnMobile ? 'hidden sm:inline' : ''}`}>
           MUSCLE<span className="text-primary">MUSE</span>
         </span>
       )}
