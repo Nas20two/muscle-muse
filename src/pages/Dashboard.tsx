@@ -6,7 +6,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Dumbbell, Calendar, TrendingUp, LogOut, ChevronRight, Target, Settings, User, Loader2, Bell, Coffee, MessageSquare, Sparkles } from "lucide-react";
+import {
+  Dumbbell,
+  Calendar,
+  TrendingUp,
+  LogOut,
+  ChevronRight,
+  Target,
+  Settings,
+  User,
+  Loader2,
+  Bell,
+  Coffee,
+  MessageSquare,
+  Sparkles,
+} from "lucide-react";
 import Logo from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
 
@@ -58,18 +72,14 @@ export default function Dashboard() {
 
     const [workoutsRes, logsRes, scheduleRes, profileRes] = await Promise.all([
       supabase.from("workout_days").select("*").order("day_number"),
-      supabase
-        .from("workout_logs")
-        .select("*")
-        .order("completed_at", { ascending: false })
-        .limit(10),
+      supabase.from("workout_logs").select("*").order("completed_at", { ascending: false }).limit(10),
       supabase.from("user_schedules").select("schedule_type").eq("user_id", user.id).maybeSingle(),
       supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle(),
     ]);
 
     if (workoutsRes.data) setWorkoutDays(workoutsRes.data);
     if (logsRes.data) setRecentLogs(logsRes.data);
-    
+
     if (scheduleRes.data) {
       setUserSchedule(scheduleRes.data as UserSchedule);
     } else {
@@ -79,10 +89,8 @@ export default function Dashboard() {
     }
 
     // Get display name from profile or user metadata
-    const name = profileRes.data?.display_name || 
-      user.user_metadata?.display_name || 
-      user.email?.split("@")[0] || 
-      "Warrior";
+    const name =
+      profileRes.data?.display_name || user.user_metadata?.display_name || user.email?.split("@")[0] || "Warrior";
     setDisplayName(name);
     setEditName(name);
 
@@ -100,10 +108,7 @@ export default function Dashboard() {
     }
 
     setSavingName(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({ display_name: editName.trim() })
-      .eq("id", user.id);
+    const { error } = await supabase.from("profiles").update({ display_name: editName.trim() }).eq("id", user.id);
 
     if (error) {
       toast({
@@ -124,12 +129,12 @@ export default function Dashboard() {
 
   const getFilteredWorkouts = () => {
     if (!userSchedule) return workoutDays;
-    
+
     switch (userSchedule.schedule_type) {
       case "3-day":
-        return workoutDays.filter(day => [1, 3, 5].includes(day.day_number));
+        return workoutDays.filter((day) => [1, 3, 5].includes(day.day_number));
       case "4-day":
-        return workoutDays.filter(day => [1, 2, 4, 5].includes(day.day_number));
+        return workoutDays.filter((day) => [1, 2, 4, 5].includes(day.day_number));
       case "5-day":
       default:
         return workoutDays;
@@ -149,9 +154,7 @@ export default function Dashboard() {
   const getCompletedThisWeek = () => {
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
-    return recentLogs.filter(
-      (log) => new Date(log.completed_at) >= weekAgo
-    ).length;
+    return recentLogs.filter((log) => new Date(log.completed_at) >= weekAgo).length;
   };
 
   const getMuscleGroupIcon = () => {
@@ -198,7 +201,9 @@ export default function Dashboard() {
                 <div className="space-y-6 pt-4">
                   {/* Display Name Section */}
                   <div className="space-y-3">
-                    <label className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Display Name</label>
+                    <label className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+                      Display Name
+                    </label>
                     <Input
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
@@ -211,11 +216,7 @@ export default function Dashboard() {
                       onClick={handleUpdateDisplayName}
                       disabled={savingName || editName.trim().length < 2}
                     >
-                      {savingName ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        "Save Changes"
-                      )}
+                      {savingName ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Changes"}
                     </Button>
                   </div>
 
@@ -224,7 +225,9 @@ export default function Dashboard() {
 
                   {/* App Support Section */}
                   <div className="space-y-3">
-                    <label className="text-sm font-medium uppercase tracking-wider text-muted-foreground">App Support</label>
+                    <label className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+                      App Support
+                    </label>
                     <div className="grid grid-cols-2 gap-3">
                       <Button
                         variant="outline"
@@ -281,7 +284,8 @@ export default function Dashboard() {
               <div>
                 <h3 className="font-display text-sm text-amber-500 uppercase tracking-wider mb-1">Latest Updates</h3>
                 <p className="text-sm text-foreground/90">
-                  Muscle Muse is now live! I've added a new 'Progress' tab to track your journey. Have a feature idea? Use the feedback button in your profile!
+                  Muscle Muse is now live! I've added a new 'The Inspiration' tab to track your journey. Have a feature
+                  idea? Use the feedback button in your profile!
                 </p>
               </div>
             </CardContent>
@@ -296,7 +300,12 @@ export default function Dashboard() {
             { label: "Streak", value: "—", icon: TrendingUp },
             { label: "Goal", value: getWeeklyGoal(), icon: Dumbbell },
           ].map((stat, i) => (
-            <Card key={i} variant="elevated" className="animate-slide-up" style={{ animationDelay: `${(i + 2) * 100}ms` }}>
+            <Card
+              key={i}
+              variant="elevated"
+              className="animate-slide-up"
+              style={{ animationDelay: `${(i + 2) * 100}ms` }}
+            >
               <CardContent className="p-4 text-center">
                 <stat.icon className="w-5 h-5 mx-auto mb-2 text-primary" />
                 <p className="font-display text-3xl">{stat.value}</p>
@@ -329,9 +338,7 @@ export default function Dashboard() {
                       <h3 className="font-display text-xl group-hover:text-primary transition-colors">
                         {day.name.toUpperCase()}
                       </h3>
-                      <p className="text-sm text-muted-foreground truncate">
-                        {day.muscle_groups.join(" • ")}
-                      </p>
+                      <p className="text-sm text-muted-foreground truncate">{day.muscle_groups.join(" • ")}</p>
                     </div>
                     <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                   </CardContent>
