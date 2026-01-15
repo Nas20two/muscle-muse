@@ -172,23 +172,23 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-xl sticky top-0 z-50">
-        <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
-          <Logo size="sm" />
-          <nav className="flex items-center gap-0.5 sm:gap-2">
+        <div className="container mx-auto px-2 sm:px-6 py-2 sm:py-4 flex items-center justify-between">
+          <Logo size="sm" hideTextOnMobile />
+          <nav className="flex items-center gap-0">
             <Link to="/inspiration">
-              <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
-                <Sparkles className="w-4 h-4" />
+              <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-9 sm:w-9">
+                <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </Button>
             </Link>
             <Link to="/progress">
-              <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
-                <TrendingUp className="w-4 h-4" />
+              <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-9 sm:w-9">
+                <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </Button>
             </Link>
             <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
-                  <User className="w-4 h-4" />
+                <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-9 sm:w-9">
+                  <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -249,12 +249,12 @@ export default function Dashboard() {
               </DialogContent>
             </Dialog>
             <Link to="/onboarding">
-              <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
-                <Settings className="w-4 h-4" />
+              <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-9 sm:w-9">
+                <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </Button>
             </Link>
-            <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={signOut}>
-              <LogOut className="w-4 h-4" />
+            <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-9 sm:w-9" onClick={signOut}>
+              <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </Button>
           </nav>
         </div>
