@@ -177,13 +177,13 @@ export default function Dashboard() {
       <header className="border-b border-border bg-card/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="container mx-auto px-2 sm:px-6 py-2 sm:py-4 flex items-center justify-between">
           <Logo size="sm" compactOnMobile />
-          <nav className="flex items-center">
-            <Link to="/inspiration">
+          <nav className="flex items-center gap-1 sm:gap-2">
+            <Link to="/inspiration" className="flex-shrink-0">
               <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
                 <Sparkles className="w-4 h-4" />
               </Button>
             </Link>
-            <Link to="/progress">
+            <Link to="/progress" className="flex-shrink-0">
               <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
                 <TrendingUp className="w-4 h-4" />
               </Button>
@@ -251,7 +251,7 @@ export default function Dashboard() {
                 </div>
               </DialogContent>
             </Dialog>
-            <Link to="/onboarding">
+            <Link to="/onboarding" className="flex-shrink-0">
               <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
                 <Settings className="w-4 h-4" />
               </Button>
