@@ -20,6 +20,7 @@ import {
   Coffee,
   MessageSquare,
   Sparkles,
+  Lock,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -45,13 +46,20 @@ export default function Dashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Data State
   const [workoutDays, setWorkoutDays] = useState<WorkoutDay[]>([]);
   const [recentLogs, setRecentLogs] = useState<WorkoutLog[]>([]);
   const [userSchedule, setUserSchedule] = useState<UserSchedule | null>(null);
+
+  // Profile State
   const [displayName, setDisplayName] = useState<string>("");
   const [editName, setEditName] = useState<string>("");
+  const [newPassword, setNewPassword] = useState<string>(""); // <--- NEW STATE
+
+  // Loading State
   const [loading, setLoading] = useState(true);
-  const [savingName, setSavingName] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -80,39 +88,52 @@ export default function Dashboard() {
       return;
     }
 
-    const name =
-      profileRes.data?.display_name || user.user_metadata?.display_name || user.email?.split("@")[0] || "Warrior";
+    const name = profileRes.data?.display_name || user.email?.split("@")[0] || "Warrior";
     setDisplayName(name);
     setEditName(name);
-
     setLoading(false);
   };
 
-  const handleUpdateDisplayName = async () => {
-    if (!user || editName.trim().length < 2) {
-      toast({
-        title: "Error",
-        description: "Display name must be at least 2 characters.",
-        variant: "destructive",
-      });
-      return;
-    }
+  // --- UPDATE PROFILE FUNCTION ---
+  const handleUpdateProfile = async () => {
+    if (!user) return;
+    setSaving(true);
 
-    setSavingName(true);
-    const { error } = await supabase.from("profiles").update({ display_name: editName.trim() }).eq("id", user.id);
+    try {
+      // 1. Update Display Name
+      if (editName.trim() !== displayName) {
+        const { error: nameError } = await supabase
+          .from("profiles")
+          .update({ display_name: editName.trim() })
+          .eq("id", user.id);
+        if (nameError) throw nameError;
+        setDisplayName(editName.trim());
+      }
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update. Try again.",
-        variant: "destructive",
-      });
-    } else {
-      setDisplayName(editName.trim());
-      toast({ title: "Success", description: "Profile updated." });
+      // 2. Update Password (if typed)
+      if (newPassword.length > 0) {
+        if (newPassword.length < 6) {
+          throw new Error("Password must be at least 6 characters");
+        }
+        const { error: pwError } = await supabase.auth.updateUser({ password: newPassword });
+        if (pwError) throw pwError;
+
+        setNewPassword(""); // Clear field on success
+        toast({ title: "Password Updated", description: "Your new password is set." });
+      } else if (editName.trim() !== displayName) {
+        toast({ title: "Profile Updated", description: "Your display name has been saved." });
+      }
+
       setProfileDialogOpen(false);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
     }
-    setSavingName(false);
   };
 
   const getFilteredWorkouts = () => {
@@ -127,10 +148,7 @@ export default function Dashboard() {
     }
   };
 
-  const getScheduleLabel = () => {
-    if (!userSchedule) return "5-Day Split";
-    return `${userSchedule.schedule_type.charAt(0)}-Day Split`;
-  };
+  const getScheduleLabel = () => (!userSchedule ? "5-Day Split" : `${userSchedule.schedule_type.charAt(0)}-Day Split`);
 
   const getCompletedThisWeek = () => {
     const weekAgo = new Date();
@@ -203,6 +221,7 @@ export default function Dashboard() {
               </Button>
             </Link>
 
+            {/* PROFILE DIALOG */}
             <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-9 w-9">
@@ -211,31 +230,46 @@ export default function Dashboard() {
               </DialogTrigger>
               <DialogContent className="max-w-sm">
                 <DialogHeader>
-                  <DialogTitle className="font-display text-2xl">Profile & Support</DialogTitle>
+                  <DialogTitle className="font-display text-2xl">Edit Profile</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-6 pt-4">
+                  {/* Name Input */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-muted-foreground">Display Name</label>
-                    <div className="flex gap-2">
-                      <Input value={editName} onChange={(e) => setEditName(e.target.value)} maxLength={50} />
-                      <Button variant="energy" onClick={handleUpdateDisplayName} disabled={savingName}>
-                        {savingName ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
-                      </Button>
-                    </div>
+                    <Input value={editName} onChange={(e) => setEditName(e.target.value)} maxLength={50} />
                   </div>
+
+                  {/* Password Input (NEW) */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <Lock className="w-3 h-3" /> Change Password (Optional)
+                    </label>
+                    <Input
+                      type="password"
+                      placeholder="Enter new password..."
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                    />
+                    <p className="text-[10px] text-muted-foreground">Leave blank to keep current password.</p>
+                  </div>
+
+                  <Button variant="energy" className="w-full" onClick={handleUpdateProfile} disabled={saving}>
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Changes"}
+                  </Button>
+
                   <div className="border-t pt-4 space-y-3">
                     <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">App Support</p>
                     <Button
                       variant="outline"
                       className="w-full justify-start gap-3"
-                      onClick={() => window.open("YOUR_GOOGLE_FORM_LINK", "_blank")}
+                      onClick={() => window.open("https://forms.google.com", "_blank")}
                     >
                       <MessageSquare className="w-4 h-4 text-primary" /> Send Feedback
                     </Button>
                     <Button
                       variant="outline"
                       className="w-full justify-start gap-3 border-orange-200 hover:bg-orange-50"
-                      onClick={() => window.open("YOUR_COFFEE_LINK", "_blank")}
+                      onClick={() => window.open("https://buymeacoffee.com", "_blank")}
                     >
                       <Coffee className="w-4 h-4 text-orange-500" /> Donate a coffee
                     </Button>
@@ -272,7 +306,7 @@ export default function Dashboard() {
               <div>
                 <h3 className="font-display text-lg text-primary tracking-wide">LATEST UPDATES</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Use the Dashboard to log your days.Use the Inspiration tab to learn new forms! Videos added".
+                  New "Inspiration" tab added! Click the sparkles icon above to see the video library.
                 </p>
               </div>
             </CardContent>
@@ -302,7 +336,7 @@ export default function Dashboard() {
           ))}
         </section>
 
-        {/* SCHEDULE SECTION (FIXED CLICKABILITY) */}
+        {/* SCHEDULE */}
         <section>
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-display text-2xl">YOUR SCHEDULE</h2>
@@ -314,7 +348,6 @@ export default function Dashboard() {
           </div>
           <div className="space-y-3">
             {getFilteredWorkouts().map((day, index) => (
-              /* FIX: Replaced Link with onClick on the Card itself */
               <Card
                 key={day.id}
                 variant="elevated"
