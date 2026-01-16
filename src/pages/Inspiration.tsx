@@ -1,11 +1,13 @@
 import { useState, useMemo, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Dumbbell, Trophy, Filter, ArrowRight, ChevronDown, Minus, Plus } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Dumbbell, Trophy, Filter, ArrowRight, Minus, Plus, Play, CheckCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface Exercise {
   id: string;
@@ -37,11 +39,17 @@ const REPS_PRESETS = [6, 8, 10, 12, 15];
 const REST_PRESETS = [30, 60, 90, 120];
 
 export default function Inspiration() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMuscles, setSelectedMuscles] = useState<string[]>([]);
   const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
   const [exerciseConfigs, setExerciseConfigs] = useState<Record<string, ExerciseConfig>>({});
+  const [selectedExercises, setSelectedExercises] = useState<string[]>([]);
+  const [startingSession, setStartingSession] = useState(false);
 
   // Fetch exercises from database
   useEffect(() => {
@@ -98,6 +106,63 @@ export default function Inspiration() {
     const current = exerciseConfigs[exerciseId]?.weight || 0;
     const newValue = Math.max(0, Math.min(500, current + delta));
     updateConfig(exerciseId, "weight", newValue);
+  };
+
+  const toggleExerciseSelection = (exerciseId: string) => {
+    setSelectedExercises((prev) =>
+      prev.includes(exerciseId)
+        ? prev.filter((id) => id !== exerciseId)
+        : [...prev, exerciseId]
+    );
+  };
+
+  const startQuickSession = async () => {
+    if (selectedExercises.length === 0) {
+      toast({
+        title: "No exercises selected",
+        description: "Select at least one exercise to start a session.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Store selected exercises + configs in localStorage for quick session
+    const sessionData = selectedExercises.map((id) => ({
+      exerciseId: id,
+      exercise: exercises.find((e) => e.id === id),
+      config: exerciseConfigs[id],
+    }));
+    localStorage.setItem("quickSessionExercises", JSON.stringify(sessionData));
+    
+    setStartingSession(true);
+    
+    // Create a workout log entry for this quick session
+    const { data, error } = await supabase.from("workout_logs").insert({
+      user_id: user?.id,
+      notes: `Quick Session: ${selectedExercises.length} exercises`,
+    }).select().single();
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to start session",
+        variant: "destructive",
+      });
+      setStartingSession(false);
+      return;
+    }
+
+    // Store the workout log ID for the session
+    localStorage.setItem("activeQuickSessionId", data.id);
+    localStorage.setItem("quickSessionStartTime", new Date().toISOString());
+    
+    toast({
+      title: "Session started!",
+      description: `${selectedExercises.length} exercises loaded. Let's go! 💪`,
+    });
+    
+    setStartingSession(false);
+    navigate("/");
   };
 
   return (
@@ -205,6 +270,21 @@ export default function Inspiration() {
                 >
                   <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-secondary/30 transition-colors">
                     <div className="flex items-center gap-3 text-left flex-1">
+                      {/* Selection Toggle */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleExerciseSelection(ex.id);
+                        }}
+                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${
+                          selectedExercises.includes(ex.id)
+                            ? "bg-primary border-primary text-primary-foreground"
+                            : "border-muted-foreground/30 hover:border-primary/50"
+                        }`}
+                      >
+                        {selectedExercises.includes(ex.id) && <CheckCircle className="w-4 h-4" />}
+                      </button>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-bold text-base">{ex.name}</h3>
@@ -324,6 +404,24 @@ export default function Inspiration() {
           </Accordion>
         )}
       </div>
+
+      {/* Sticky Start Session Button */}
+      {selectedExercises.length > 0 && (
+        <div className="fixed bottom-4 left-4 right-4 max-w-4xl mx-auto z-50 animate-slide-up">
+          <Button
+            variant="energy"
+            size="xl"
+            className="w-full shadow-2xl"
+            onClick={startQuickSession}
+            disabled={startingSession}
+          >
+            <Play className="w-5 h-5 mr-2" />
+            {startingSession
+              ? "Starting..."
+              : `Start Session (${selectedExercises.length} exercise${selectedExercises.length > 1 ? "s" : ""})`}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

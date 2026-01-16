@@ -72,6 +72,29 @@ export default function WorkoutDetail() {
   const [loading, setLoading] = useState(true);
   const [startingWorkout, setStartingWorkout] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+  
+  // Active workout session state
+  const [activeWorkoutLogId, setActiveWorkoutLogId] = useState<string | null>(null);
+  const [workoutStartTime, setWorkoutStartTime] = useState<Date | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [finishingWorkout, setFinishingWorkout] = useState(false);
+
+  // Timer effect for active workout
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (activeWorkoutLogId && workoutStartTime) {
+      interval = setInterval(() => {
+        setElapsedSeconds(Math.floor((Date.now() - workoutStartTime.getTime()) / 1000));
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [activeWorkoutLogId, workoutStartTime]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   useEffect(() => {
     if (id) fetchWorkoutData();
@@ -179,10 +202,10 @@ export default function WorkoutDetail() {
 
   const startWorkout = async () => {
     setStartingWorkout(true);
-    const { error } = await supabase.from("workout_logs").insert({
+    const { data, error } = await supabase.from("workout_logs").insert({
       user_id: user?.id,
       workout_day_id: id,
-    });
+    }).select().single();
 
     if (error) {
       toast({
@@ -191,12 +214,46 @@ export default function WorkoutDetail() {
         variant: "destructive",
       });
     } else {
+      setActiveWorkoutLogId(data.id);
+      setWorkoutStartTime(new Date());
+      setElapsedSeconds(0);
       toast({
         title: "Workout started!",
-        description: "Crush it today! 💪",
+        description: "Timer is running. Crush it! 💪",
       });
     }
     setStartingWorkout(false);
+  };
+
+  const finishWorkout = async () => {
+    if (!activeWorkoutLogId) return;
+    setFinishingWorkout(true);
+    
+    const durationMinutes = Math.ceil(elapsedSeconds / 60);
+    const { error } = await supabase
+      .from("workout_logs")
+      .update({ 
+        duration_minutes: durationMinutes, 
+        completed_at: new Date().toISOString() 
+      })
+      .eq("id", activeWorkoutLogId);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save workout",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Workout Complete! 🎉",
+        description: `Duration: ${durationMinutes} minutes`,
+      });
+      setActiveWorkoutLogId(null);
+      setWorkoutStartTime(null);
+      setElapsedSeconds(0);
+    }
+    setFinishingWorkout(false);
   };
 
   if (loading) {
@@ -424,18 +481,36 @@ export default function WorkoutDetail() {
           })}
         </div>
 
-        {/* Start Workout Button */}
-        <div className="sticky bottom-4">
-          <Button
-            variant="energy"
-            size="xl"
-            className="w-full"
-            onClick={startWorkout}
-            disabled={startingWorkout}
-          >
-            <Play className="w-5 h-5 mr-2" />
-            {startingWorkout ? "Starting..." : "Start Workout"}
-          </Button>
+        {/* Start/Finish Workout Button */}
+        <div className="sticky bottom-4 space-y-2">
+          {activeWorkoutLogId ? (
+            <>
+              <div className="text-center font-display text-3xl text-primary animate-pulse">
+                ⏱ {formatTime(elapsedSeconds)}
+              </div>
+              <Button
+                variant="success"
+                size="xl"
+                className="w-full"
+                onClick={finishWorkout}
+                disabled={finishingWorkout}
+              >
+                <Check className="w-5 h-5 mr-2" />
+                {finishingWorkout ? "Saving..." : "Finish Workout"}
+              </Button>
+            </>
+          ) : (
+            <Button
+              variant="energy"
+              size="xl"
+              className="w-full"
+              onClick={startWorkout}
+              disabled={startingWorkout}
+            >
+              <Play className="w-5 h-5 mr-2" />
+              {startingWorkout ? "Starting..." : "Start Workout"}
+            </Button>
+          )}
         </div>
       </main>
     </div>
