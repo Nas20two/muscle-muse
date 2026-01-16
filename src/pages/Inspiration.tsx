@@ -1,235 +1,144 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Dumbbell, Trophy, Filter, ArrowRight, Minus, Plus, Play, CheckCircle, Square, Clock } from "lucide-react";
+import { Dumbbell, Trophy, Filter, ArrowRight, Info, Play, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
-interface Exercise {
-  id: string;
-  name: string;
-  muscle_group: string;
-  equipment: string | null;
-  description: string | null;
-  technique_tips: string[] | null;
-  is_compound: boolean | null;
-  is_bodyweight: boolean | null;
-}
-
-interface ExerciseConfig {
-  weight: number;
-  reps: number;
-  restSeconds: number;
-}
-
-const MUSCLE_GROUPS = ["chest", "back", "shoulders", "biceps", "triceps", "quads", "hamstrings", "glutes", "calves"];
-const EQUIPMENT_LIST = [
-  { id: "barbell", label: "Barbell" },
-  { id: "dumbbells", label: "Dumbbells" },
-  { id: "cables", label: "Cables" },
-  { id: "machine", label: "Machine" },
-  { id: "bodyweight", label: "Bodyweight" },
+// --- THE DATA (With Real YouTube IDs) ---
+const EXERCISE_DB = [
+  {
+    id: 1,
+    name: "Push-ups",
+    muscles: ["chest", "triceps", "shoulders"],
+    equipment: ["bodyweight"],
+    difficulty: "Beginner",
+    tutorial: "IODxDxX7oi4", // Standard Pushup
+  },
+  {
+    id: 2,
+    name: "Dumbbell Bench Press",
+    muscles: ["chest", "shoulders"],
+    equipment: ["dumbbell"],
+    difficulty: "Intermediate",
+    tutorial: "Y_7aHqEeup4", // DB Bench Press
+  },
+  {
+    id: 3,
+    name: "Pull-ups",
+    muscles: ["back", "biceps"],
+    equipment: ["pull_up_bar"],
+    difficulty: "Intermediate",
+    tutorial: "eGo4IYlbE5g", // Pullup Form
+  },
+  {
+    id: 4,
+    name: "Bodyweight Squats",
+    muscles: ["legs"],
+    equipment: ["bodyweight"],
+    difficulty: "Beginner",
+    tutorial: "gcNh17Ckjgg", // Bodyweight Squat
+  },
+  {
+    id: 5,
+    name: "Goblet Squats",
+    muscles: ["legs"],
+    equipment: ["dumbbell", "kettlebell"],
+    difficulty: "Beginner",
+    tutorial: "MeIiIdhvXT4", // Goblet Squat
+  },
+  {
+    id: 6,
+    name: "Dumbbell Rows",
+    muscles: ["back"],
+    equipment: ["dumbbell"],
+    difficulty: "Beginner",
+    tutorial: "pYcpY20QaE8", // Single Arm Row
+  },
+  {
+    id: 7,
+    name: "Plank",
+    muscles: ["core"],
+    equipment: ["bodyweight"],
+    difficulty: "Beginner",
+    tutorial: "pSHjTRCQxIw", // Plank Form
+  },
+  {
+    id: 8,
+    name: "Walking Lunges",
+    muscles: ["legs"],
+    equipment: ["bodyweight", "dumbbell"],
+    difficulty: "Intermediate",
+    tutorial: "L8fvybG1VjY", // Walking Lunges
+  },
+  {
+    id: 9,
+    name: "Dumbbell Shoulder Press",
+    muscles: ["shoulders"],
+    equipment: ["dumbbell"],
+    difficulty: "Intermediate",
+    tutorial: "qEwKCR5JCog", // Seated DB Press
+  },
+  {
+    id: 10,
+    name: "Mountain Climbers",
+    muscles: ["core", "cardio"],
+    equipment: ["bodyweight"],
+    difficulty: "Beginner",
+    tutorial: "nmwgirgXLYM", // Mountain Climbers
+  },
+  {
+    id: 11,
+    name: "Diamond Push-ups",
+    muscles: ["triceps", "chest"],
+    equipment: ["bodyweight"],
+    difficulty: "Advanced",
+    tutorial: "J0DnG1_S92I", // Diamond Pushups
+  },
+  {
+    id: 12,
+    name: "Dumbbell Deadlift",
+    muscles: ["legs", "back"],
+    equipment: ["dumbbell"],
+    difficulty: "Intermediate",
+    tutorial: "lHrqS_J66v8", // DB RDL
+  },
 ];
 
-const REPS_PRESETS = [6, 8, 10, 12, 15];
-const REST_PRESETS = [30, 60, 90, 120];
+const MUSCLE_GROUPS = ["chest", "back", "legs", "shoulders", "arms", "core"];
+const EQUIPMENT_LIST = [
+  { id: "bodyweight", label: "Bodyweight Only" },
+  { id: "dumbbell", label: "Dumbbells" },
+  { id: "pull_up_bar", label: "Pull-up Bar" },
+];
 
 export default function Inspiration() {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  
-  const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedMuscles, setSelectedMuscles] = useState<string[]>([]);
-  const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
-  const [exerciseConfigs, setExerciseConfigs] = useState<Record<string, ExerciseConfig>>({});
-  const [selectedExercises, setSelectedExercises] = useState<string[]>([]);
-  const [startingSession, setStartingSession] = useState(false);
-  
-  // Active session state
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
-  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [finishingSession, setFinishingSession] = useState(false);
+  const [selectedEquipment, setSelectedEquipment] = useState<string[]>(["bodyweight"]);
 
-  // Timer effect for active session
-  useEffect(() => {
-    if (!sessionStartTime) return;
-    
-    const interval = setInterval(() => {
-      const now = new Date();
-      const elapsed = Math.floor((now.getTime() - sessionStartTime.getTime()) / 1000);
-      setElapsedSeconds(elapsed);
-    }, 1000);
-    
-    return () => clearInterval(interval);
-  }, [sessionStartTime]);
-
-  const formatTime = useCallback((seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  }, []);
-
-  // Fetch exercises from database
-  useEffect(() => {
-    async function fetchExercises() {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("exercises")
-        .select("*")
-        .order("muscle_group");
-      
-      if (error) {
-        console.error("Error fetching exercises:", error);
-      } else {
-        setExercises(data || []);
-        // Initialize configs for all exercises
-        const initialConfigs: Record<string, ExerciseConfig> = {};
-        (data || []).forEach((ex) => {
-          initialConfigs[ex.id] = { weight: 20, reps: 10, restSeconds: 60 };
-        });
-        setExerciseConfigs(initialConfigs);
-      }
-      setLoading(false);
-    }
-    fetchExercises();
-  }, []);
-
-  // Filter exercises based on selections
+  // --- THE LOGIC ENGINE ---
   const filteredExercises = useMemo(() => {
-    return exercises.filter((ex) => {
-      const muscleMatch = selectedMuscles.length === 0 || selectedMuscles.includes(ex.muscle_group.toLowerCase());
-      const equipmentMatch = selectedEquipment.length === 0 || 
-        (ex.equipment && selectedEquipment.includes(ex.equipment.toLowerCase())) ||
-        (ex.is_bodyweight && selectedEquipment.includes("bodyweight"));
+    return EXERCISE_DB.filter((ex) => {
+      const muscleMatch = selectedMuscles.length === 0 || ex.muscles.some((m) => selectedMuscles.includes(m));
+      const equipmentMatch = ex.equipment.some((eq) => selectedEquipment.includes(eq));
       return muscleMatch && equipmentMatch;
     });
-  }, [exercises, selectedMuscles, selectedEquipment]);
+  }, [selectedMuscles, selectedEquipment]);
 
   const toggleMuscle = (m: string) => {
     setSelectedMuscles((prev) => (prev.includes(m) ? prev.filter((i) => i !== m) : [...prev, m]));
   };
-
   const toggleEquipment = (e: string) => {
     setSelectedEquipment((prev) => (prev.includes(e) ? prev.filter((i) => i !== e) : [...prev, e]));
-  };
-
-  const updateConfig = (exerciseId: string, field: keyof ExerciseConfig, value: number) => {
-    setExerciseConfigs((prev) => ({
-      ...prev,
-      [exerciseId]: { ...prev[exerciseId], [field]: value },
-    }));
-  };
-
-  const adjustWeight = (exerciseId: string, delta: number) => {
-    const current = exerciseConfigs[exerciseId]?.weight || 0;
-    const newValue = Math.max(0, Math.min(500, current + delta));
-    updateConfig(exerciseId, "weight", newValue);
-  };
-
-  const toggleExerciseSelection = (exerciseId: string) => {
-    setSelectedExercises((prev) =>
-      prev.includes(exerciseId)
-        ? prev.filter((id) => id !== exerciseId)
-        : [...prev, exerciseId]
-    );
-  };
-
-  const startQuickSession = async () => {
-    if (selectedExercises.length === 0) {
-      toast({
-        title: "No exercises selected",
-        description: "Select at least one exercise to start a session.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Store selected exercises + configs in localStorage for quick session
-    const sessionData = selectedExercises.map((id) => ({
-      exerciseId: id,
-      exercise: exercises.find((e) => e.id === id),
-      config: exerciseConfigs[id],
-    }));
-    localStorage.setItem("quickSessionExercises", JSON.stringify(sessionData));
-    
-    setStartingSession(true);
-    
-    // Create a workout log entry for this quick session
-    const { data, error } = await supabase.from("workout_logs").insert({
-      user_id: user?.id,
-      notes: `Quick Session: ${selectedExercises.length} exercises`,
-    }).select().single();
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to start session",
-        variant: "destructive",
-      });
-      setStartingSession(false);
-      return;
-    }
-
-    // Set active session state - stay on same page
-    setActiveSessionId(data.id);
-    setSessionStartTime(new Date());
-    setElapsedSeconds(0);
-    
-    toast({
-      title: "Session started!",
-      description: `${selectedExercises.length} exercises loaded. Timer running! 💪`,
-    });
-    
-    setStartingSession(false);
-  };
-
-  const finishSession = async () => {
-    if (!activeSessionId) return;
-    
-    setFinishingSession(true);
-    
-    const durationMinutes = Math.ceil(elapsedSeconds / 60);
-    
-    const { error } = await supabase
-      .from("workout_logs")
-      .update({
-        duration_minutes: durationMinutes,
-        completed_at: new Date().toISOString(),
-      })
-      .eq("id", activeSessionId);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to save session",
-        variant: "destructive",
-      });
-      setFinishingSession(false);
-      return;
-    }
-
-    toast({
-      title: "Session complete! 🎉",
-      description: `Great work! ${durationMinutes} minutes logged.`,
-    });
-
-    // Reset session state
-    setActiveSessionId(null);
-    setSessionStartTime(null);
-    setElapsedSeconds(0);
-    setSelectedExercises([]);
-    setFinishingSession(false);
-    
-    // Clear localStorage
-    localStorage.removeItem("quickSessionExercises");
-    localStorage.removeItem("activeQuickSessionId");
-    localStorage.removeItem("quickSessionStartTime");
   };
 
   return (
@@ -242,12 +151,11 @@ export default function Inspiration() {
         <h1 className="font-display text-4xl font-bold mb-2">
           THE <span className="text-primary">INSPIRATION</span>
         </h1>
-        <p className="text-muted-foreground">Select your gear. Select your target. Configure your sets.</p>
+        <p className="text-muted-foreground">Select your gear. Select your target. Get to work.</p>
       </div>
 
       {/* FILTERS */}
       <div className="grid gap-6 md:grid-cols-2 mb-10">
-        {/* Equipment Card */}
         <Card className="border-primary/10 bg-card/50 backdrop-blur">
           <CardContent className="p-4">
             <h3 className="font-display text-lg mb-3 flex items-center gap-2">
@@ -268,7 +176,6 @@ export default function Inspiration() {
           </CardContent>
         </Card>
 
-        {/* Target Muscles Card */}
         <Card className="border-primary/10 bg-card/50 backdrop-blur">
           <CardContent className="p-4">
             <h3 className="font-display text-lg mb-3 flex items-center gap-2">
@@ -280,7 +187,7 @@ export default function Inspiration() {
                   key={m}
                   className={`cursor-pointer px-3 py-2 text-sm uppercase tracking-wide transition-all ${
                     selectedMuscles.includes(m)
-                      ? "bg-gradient-to-r from-primary to-destructive text-primary-foreground border-0"
+                      ? "bg-gradient-to-r from-orange-500 to-red-600 text-white border-0"
                       : "bg-secondary hover:bg-secondary/80 text-secondary-foreground"
                   }`}
                   onClick={() => toggleMuscle(m)}
@@ -293,20 +200,17 @@ export default function Inspiration() {
         </Card>
       </div>
 
-      {/* RESULTS */}
+      {/* RESULTS GRID */}
       <div className="space-y-4 animate-slide-up">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-display">
             EXERCISES <span className="text-muted-foreground text-sm ml-2">({filteredExercises.length})</span>
           </h2>
-          {(selectedMuscles.length > 0 || selectedEquipment.length > 0) && (
+          {selectedMuscles.length > 0 && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => {
-                setSelectedMuscles([]);
-                setSelectedEquipment([]);
-              }}
+              onClick={() => setSelectedMuscles([])}
               className="text-xs text-muted-foreground"
             >
               Clear Filters
@@ -314,207 +218,69 @@ export default function Inspiration() {
           )}
         </div>
 
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-pulse text-muted-foreground">Loading exercises...</div>
-          </div>
-        ) : filteredExercises.length === 0 ? (
+        {filteredExercises.length === 0 ? (
           <div className="text-center py-12 border-2 border-dashed border-muted rounded-xl">
             <Filter className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
             <p className="text-lg font-medium">No exercises match these filters.</p>
-            <p className="text-sm text-muted-foreground">Try adjusting your selection.</p>
+            <p className="text-sm text-muted-foreground">Try adding more equipment.</p>
           </div>
         ) : (
-          <Accordion type="single" collapsible className="space-y-3">
-            {filteredExercises.map((ex) => {
-              const config = exerciseConfigs[ex.id] || { weight: 20, reps: 10, restSeconds: 60 };
-              
-              return (
-                <AccordionItem 
-                  key={ex.id} 
-                  value={ex.id}
-                  className="border border-border/50 rounded-xl overflow-hidden bg-card/50 backdrop-blur data-[state=open]:border-primary/30"
-                >
-                  <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-secondary/30 transition-colors">
-                    <div className="flex items-center gap-3 text-left flex-1">
-                      {/* Selection Toggle */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleExerciseSelection(ex.id);
-                        }}
-                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${
-                          selectedExercises.includes(ex.id)
-                            ? "bg-primary border-primary text-primary-foreground"
-                            : "border-muted-foreground/30 hover:border-primary/50"
-                        }`}
-                      >
-                        {selectedExercises.includes(ex.id) && <CheckCircle className="w-4 h-4" />}
-                      </button>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-bold text-base">{ex.name}</h3>
-                          {ex.is_compound && (
-                            <Badge variant="outline" className="text-[10px] h-5 px-1.5 border-primary/50 text-primary">
-                              Compound
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground uppercase tracking-wider">
-                          {ex.muscle_group} {ex.equipment && `• ${ex.equipment}`}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredExercises.map((ex) => (
+              <Card key={ex.id} className="group hover:border-primary/50 transition-colors">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-bold text-lg">{ex.name}</h3>
+                      <Badge variant="outline" className="text-[10px] h-5 px-1.5">
+                        {ex.difficulty}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider">{ex.muscles.join(" • ")}</p>
+                  </div>
+
+                  {/* VIDEO DIALOG BUTTON */}
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="hover:text-primary hover:bg-primary/10">
+                        <Play className="w-4 h-4 fill-current" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md bg-background/95 backdrop-blur-xl border-white/10">
+                      <DialogHeader>
+                        <DialogTitle className="font-display text-2xl mb-1">{ex.name}</DialogTitle>
+                        <DialogDescription>Watch this quick demo to master your form.</DialogDescription>
+                      </DialogHeader>
+
+                      {/* YouTube Embed */}
+                      <div className="relative w-full pb-[56.25%] rounded-xl overflow-hidden border border-border bg-black mt-2 shadow-2xl">
+                        <iframe
+                          className="absolute top-0 left-0 w-full h-full"
+                          src={`https://www.youtube.com/embed/${ex.tutorial}?rel=0&autoplay=1&mute=1`}
+                          title={ex.name}
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        ></iframe>
+                      </div>
+
+                      <div className="mt-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                        <p className="text-sm font-medium text-primary flex items-center gap-2">
+                          <Info className="w-4 h-4" /> Pro Tip:
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Focus on slow, controlled movement. Do not rush the rep.
                         </p>
                       </div>
-                    </div>
-                  </AccordionTrigger>
-                  
-                  <AccordionContent className="px-4 pb-4">
-                    {/* Description */}
-                    {ex.description && (
-                      <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-                        {ex.description}
-                      </p>
-                    )}
-
-                    {/* Technique Tips */}
-                    {ex.technique_tips && ex.technique_tips.length > 0 && (
-                      <div className="mb-4">
-                        <h4 className="text-xs font-semibold uppercase tracking-wide text-primary mb-2">Tips</h4>
-                        <ul className="text-xs text-muted-foreground space-y-1">
-                          {ex.technique_tips.map((tip, i) => (
-                            <li key={i} className="flex items-start gap-2">
-                              <span className="text-primary">•</span>
-                              {tip}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {/* Configuration Inputs */}
-                    <div className="grid grid-cols-3 gap-4 pt-3 border-t border-border/50">
-                      {/* Weight */}
-                      <div>
-                        <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground block mb-2">
-                          Weight (kg)
-                        </label>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8 border-primary/20"
-                            onClick={() => adjustWeight(ex.id, -2.5)}
-                          >
-                            <Minus className="w-3 h-3" />
-                          </Button>
-                          <input
-                            type="number"
-                            value={config.weight}
-                            onChange={(e) => updateConfig(ex.id, "weight", parseFloat(e.target.value) || 0)}
-                            className="w-14 h-8 text-center text-sm font-bold bg-secondary border border-primary/20 rounded-md focus:outline-none focus:border-primary"
-                          />
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8 border-primary/20"
-                            onClick={() => adjustWeight(ex.id, 2.5)}
-                          >
-                            <Plus className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </div>
-
-                      {/* Reps */}
-                      <div>
-                        <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground block mb-2">
-                          Reps
-                        </label>
-                        <div className="flex flex-wrap gap-1">
-                          {REPS_PRESETS.map((rep) => (
-                            <Button
-                              key={rep}
-                              variant={config.reps === rep ? "default" : "outline"}
-                              size="sm"
-                              className={`h-8 px-2 text-xs ${config.reps === rep ? "" : "border-primary/20"}`}
-                              onClick={() => updateConfig(ex.id, "reps", rep)}
-                            >
-                              {rep}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Rest */}
-                      <div>
-                        <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground block mb-2">
-                          Rest (sec)
-                        </label>
-                        <div className="flex flex-wrap gap-1">
-                          {REST_PRESETS.map((rest) => (
-                            <Button
-                              key={rest}
-                              variant={config.restSeconds === rest ? "default" : "outline"}
-                              size="sm"
-                              className={`h-8 px-2 text-xs ${config.restSeconds === rest ? "" : "border-primary/20"}`}
-                              onClick={() => updateConfig(ex.id, "restSeconds", rest)}
-                            >
-                              {rest}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              );
-            })}
-          </Accordion>
+                    </DialogContent>
+                  </Dialog>
+                  {/* END VIDEO DIALOG */}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
       </div>
-
-      {/* Sticky Session Button */}
-      {(selectedExercises.length > 0 || activeSessionId) && (
-        <div className="fixed bottom-4 left-4 right-4 max-w-4xl mx-auto z-50 animate-slide-up">
-          {activeSessionId ? (
-            // Active session UI - timer + finish button
-            <div className="bg-card border border-primary/30 rounded-2xl shadow-2xl p-4 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-primary animate-pulse" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider">Session Active</p>
-                  <p className="font-display text-2xl text-primary">{formatTime(elapsedSeconds)}</p>
-                </div>
-              </div>
-              <Button
-                variant="energy"
-                size="lg"
-                onClick={finishSession}
-                disabled={finishingSession}
-                className="px-6"
-              >
-                <Square className="w-4 h-4 mr-2" />
-                {finishingSession ? "Saving..." : "Finish"}
-              </Button>
-            </div>
-          ) : (
-            // Start session button
-            <Button
-              variant="energy"
-              size="xl"
-              className="w-full shadow-2xl"
-              onClick={startQuickSession}
-              disabled={startingSession}
-            >
-              <Play className="w-5 h-5 mr-2" />
-              {startingSession
-                ? "Starting..."
-                : `Start Session (${selectedExercises.length} exercise${selectedExercises.length > 1 ? "s" : ""})`}
-            </Button>
-          )}
-        </div>
-      )}
     </div>
   );
 }
