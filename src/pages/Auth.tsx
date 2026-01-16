@@ -86,13 +86,13 @@ export default function Auth() {
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-energy mb-4">
             <Dumbbell className="w-6 h-6 text-white" />
           </div>
-          <h1 className="font-display text-3xl font-bold tracking-tight">MUSCLE MUSE</h1>
+          <h1 className="font-display text-3xl font-bold tracking-tight energy-text">MUSCLE MUSE</h1>
           <p className="text-muted-foreground">Transform your training into a habit.</p>
         </div>
 
         <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="text-xl font-display text-center">
+            <CardTitle className="text-xl font-display text-center energy-text">
               {view === "sign_in" && "Welcome Back"}
               {view === "sign_up" && "Create Account"}
               {view === "forgot_password" && "Reset Password"}
