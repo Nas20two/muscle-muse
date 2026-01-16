@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Dumbbell, Trophy, Filter, ArrowRight, Info, Play, Sparkles, Video } from "lucide-react";
+import { Dumbbell, Trophy, Filter, ArrowRight, ArrowLeft, Info, Play, Sparkles, Video, CheckCircle, Clock, Square } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
