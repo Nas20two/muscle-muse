@@ -272,8 +272,7 @@ export default function Dashboard() {
               <div>
                 <h3 className="font-display text-lg text-primary tracking-wide">LATEST UPDATES</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  New "Inspiration" tab added! Click the sparkles icon above to generate instant workouts based on your
-                  equipment.
+                  Use the Dashboard to log your days.Use the Inspiration tab to learn new forms! Videos added".
                 </p>
               </div>
             </CardContent>
