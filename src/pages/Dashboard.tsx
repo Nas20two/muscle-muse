@@ -55,7 +55,7 @@ export default function Dashboard() {
   // Profile State
   const [displayName, setDisplayName] = useState<string>("");
   const [editName, setEditName] = useState<string>("");
-  const [newPassword, setNewPassword] = useState<string>(""); // <--- NEW STATE
+  const [newPassword, setNewPassword] = useState<string>("");
 
   // Loading State
   const [loading, setLoading] = useState(true);
@@ -176,32 +176,14 @@ export default function Dashboard() {
       {/* HEADER */}
       <header className="border-b border-border bg-card/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          {/* LOGO */}
+          {/* LOGO - Hardcoded Colors to Guarantee "Energy" Look */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 flex items-center justify-center">
-              <svg
-                viewBox="0 0 40 40"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-full h-full drop-shadow-sm"
-              >
-                <rect width="40" height="40" rx="10" fill="url(#energy-gradient)" />
-                <path
-                  d="M8 24H14L17 12L21 28L24 20C24 20 25 15 29 15C33 15 33 20 33 20L33 24M33 24L30 21M33 24L36 21"
-                  stroke="white"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <defs>
-                  <linearGradient id="energy-gradient" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#f97316" />
-                    <stop offset="1" stopColor="#dc2626" />
-                  </linearGradient>
-                </defs>
-              </svg>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-orange-500 to-red-600 shadow-lg shadow-orange-500/20">
+              <Dumbbell className="w-5 h-5 text-white" />
             </div>
-            <span className="font-display text-2xl energy-text tracking-wide hidden sm:block">MUSCLE MUSE</span>
+            <span className="font-display text-2xl tracking-wide hidden sm:block font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">
+              MUSCLE MUSE
+            </span>
           </div>
 
           {/* NAV BUTTONS */}
@@ -253,7 +235,11 @@ export default function Dashboard() {
                     <p className="text-[10px] text-muted-foreground">Leave blank to keep current password.</p>
                   </div>
 
-                  <Button variant="energy" className="w-full" onClick={handleUpdateProfile} disabled={saving}>
+                  <Button
+                    className="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white border-0 hover:opacity-90"
+                    onClick={handleUpdateProfile}
+                    disabled={saving}
+                  >
                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Changes"}
                   </Button>
 
@@ -296,15 +282,15 @@ export default function Dashboard() {
           <p className="text-muted-foreground text-lg">{getCompletedThisWeek()} workouts this week</p>
         </section>
 
-        {/* UPDATES SECTION */}
+        {/* UPDATES SECTION - Hardcoded Colors */}
         <section className="mb-8 animate-slide-up" style={{ animationDelay: "100ms" }}>
-          <Card className="bg-primary/5 border-primary/20 border-dashed">
+          <Card className="bg-orange-500/5 border-orange-500/20 border-dashed">
             <CardContent className="p-4 flex items-start gap-4">
-              <div className="bg-primary/10 p-2 rounded-lg">
-                <Bell className="w-5 h-5 text-primary" />
+              <div className="bg-orange-500/10 p-2 rounded-lg">
+                <Bell className="w-5 h-5 text-orange-500" />
               </div>
               <div>
-                <h3 className="font-display text-lg text-primary tracking-wide">LATEST UPDATES</h3>
+                <h3 className="font-display text-lg text-orange-600 tracking-wide">LATEST UPDATES</h3>
                 <p className="text-sm text-muted-foreground mt-1">
                   New "Inspiration" tab added! Click the sparkles icon above to see the video library.
                 </p>
@@ -328,7 +314,7 @@ export default function Dashboard() {
               style={{ animationDelay: `${i * 100 + 200}ms` }}
             >
               <CardContent className="p-4 text-center">
-                <stat.icon className="w-5 h-5 mx-auto mb-2 text-primary" />
+                <stat.icon className="w-5 h-5 mx-auto mb-2 text-orange-500" />
                 <p className="font-display text-3xl">{stat.value}</p>
                 <p className="text-xs text-muted-foreground uppercase">{stat.label}</p>
               </CardContent>
@@ -341,7 +327,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-display text-2xl">YOUR SCHEDULE</h2>
             <Link to="/onboarding">
-              <span className="workout-badge hover:bg-primary/20 cursor-pointer transition-colors">
+              <span className="workout-badge hover:bg-orange-500/10 text-orange-600 cursor-pointer transition-colors">
                 {getScheduleLabel()}
               </span>
             </Link>
@@ -351,21 +337,21 @@ export default function Dashboard() {
               <Card
                 key={day.id}
                 variant="elevated"
-                className="group cursor-pointer hover:border-primary/50 transition-all animate-slide-up"
+                className="group cursor-pointer hover:border-orange-500/50 transition-all animate-slide-up"
                 style={{ animationDelay: `${(index + 4) * 100}ms` }}
                 onClick={() => navigate(`/workout/${day.id}`)}
               >
                 <CardContent className="p-4 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center text-2xl group-hover:bg-primary/10 transition-colors">
+                  <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center text-2xl group-hover:bg-orange-500/10 transition-colors">
                     {getMuscleGroupIcon(day.muscle_groups)}
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-display text-xl group-hover:text-primary transition-colors">
+                    <h3 className="font-display text-xl group-hover:text-orange-500 transition-colors">
                       {day.name.toUpperCase()}
                     </h3>
                     <p className="text-sm text-muted-foreground">{day.muscle_groups.join(" • ")}</p>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-orange-500 group-hover:translate-x-1 transition-all" />
                 </CardContent>
               </Card>
             ))}
