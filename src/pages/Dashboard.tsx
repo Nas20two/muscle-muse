@@ -324,7 +324,7 @@ export default function Dashboard() {
 
           <div className="space-y-3">
             {filteredWorkouts.map((day, index) => (
-              <Link key={day.id} to={`/workout/${day.id}`}>
+              <Link key={day.id} to={`/workout/${day.id}`} className="block">
                 <Card
                   variant="elevated"
                   className="group cursor-pointer hover:border-primary/50 transition-all duration-300 animate-slide-up"

@@ -1,6 +1,6 @@
-import { useState, useMemo, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Dumbbell, Trophy, Filter, ArrowRight, Minus, Plus, Play, CheckCircle } from "lucide-react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
+import { Dumbbell, Trophy, Filter, ArrowRight, Minus, Plus, Play, CheckCircle, Square, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,7 +39,6 @@ const REPS_PRESETS = [6, 8, 10, 12, 15];
 const REST_PRESETS = [30, 60, 90, 120];
 
 export default function Inspiration() {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   
@@ -50,6 +49,31 @@ export default function Inspiration() {
   const [exerciseConfigs, setExerciseConfigs] = useState<Record<string, ExerciseConfig>>({});
   const [selectedExercises, setSelectedExercises] = useState<string[]>([]);
   const [startingSession, setStartingSession] = useState(false);
+  
+  // Active session state
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [finishingSession, setFinishingSession] = useState(false);
+
+  // Timer effect for active session
+  useEffect(() => {
+    if (!sessionStartTime) return;
+    
+    const interval = setInterval(() => {
+      const now = new Date();
+      const elapsed = Math.floor((now.getTime() - sessionStartTime.getTime()) / 1000);
+      setElapsedSeconds(elapsed);
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [sessionStartTime]);
+
+  const formatTime = useCallback((seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  }, []);
 
   // Fetch exercises from database
   useEffect(() => {
@@ -152,17 +176,60 @@ export default function Inspiration() {
       return;
     }
 
-    // Store the workout log ID for the session
-    localStorage.setItem("activeQuickSessionId", data.id);
-    localStorage.setItem("quickSessionStartTime", new Date().toISOString());
+    // Set active session state - stay on same page
+    setActiveSessionId(data.id);
+    setSessionStartTime(new Date());
+    setElapsedSeconds(0);
     
     toast({
       title: "Session started!",
-      description: `${selectedExercises.length} exercises loaded. Let's go! 💪`,
+      description: `${selectedExercises.length} exercises loaded. Timer running! 💪`,
     });
     
     setStartingSession(false);
-    navigate("/");
+  };
+
+  const finishSession = async () => {
+    if (!activeSessionId) return;
+    
+    setFinishingSession(true);
+    
+    const durationMinutes = Math.ceil(elapsedSeconds / 60);
+    
+    const { error } = await supabase
+      .from("workout_logs")
+      .update({
+        duration_minutes: durationMinutes,
+        completed_at: new Date().toISOString(),
+      })
+      .eq("id", activeSessionId);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save session",
+        variant: "destructive",
+      });
+      setFinishingSession(false);
+      return;
+    }
+
+    toast({
+      title: "Session complete! 🎉",
+      description: `Great work! ${durationMinutes} minutes logged.`,
+    });
+
+    // Reset session state
+    setActiveSessionId(null);
+    setSessionStartTime(null);
+    setElapsedSeconds(0);
+    setSelectedExercises([]);
+    setFinishingSession(false);
+    
+    // Clear localStorage
+    localStorage.removeItem("quickSessionExercises");
+    localStorage.removeItem("activeQuickSessionId");
+    localStorage.removeItem("quickSessionStartTime");
   };
 
   return (
@@ -405,21 +472,47 @@ export default function Inspiration() {
         )}
       </div>
 
-      {/* Sticky Start Session Button */}
-      {selectedExercises.length > 0 && (
+      {/* Sticky Session Button */}
+      {(selectedExercises.length > 0 || activeSessionId) && (
         <div className="fixed bottom-4 left-4 right-4 max-w-4xl mx-auto z-50 animate-slide-up">
-          <Button
-            variant="energy"
-            size="xl"
-            className="w-full shadow-2xl"
-            onClick={startQuickSession}
-            disabled={startingSession}
-          >
-            <Play className="w-5 h-5 mr-2" />
-            {startingSession
-              ? "Starting..."
-              : `Start Session (${selectedExercises.length} exercise${selectedExercises.length > 1 ? "s" : ""})`}
-          </Button>
+          {activeSessionId ? (
+            // Active session UI - timer + finish button
+            <div className="bg-card border border-primary/30 rounded-2xl shadow-2xl p-4 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+                  <Clock className="w-6 h-6 text-primary animate-pulse" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider">Session Active</p>
+                  <p className="font-display text-2xl text-primary">{formatTime(elapsedSeconds)}</p>
+                </div>
+              </div>
+              <Button
+                variant="energy"
+                size="lg"
+                onClick={finishSession}
+                disabled={finishingSession}
+                className="px-6"
+              >
+                <Square className="w-4 h-4 mr-2" />
+                {finishingSession ? "Saving..." : "Finish"}
+              </Button>
+            </div>
+          ) : (
+            // Start session button
+            <Button
+              variant="energy"
+              size="xl"
+              className="w-full shadow-2xl"
+              onClick={startQuickSession}
+              disabled={startingSession}
+            >
+              <Play className="w-5 h-5 mr-2" />
+              {startingSession
+                ? "Starting..."
+                : `Start Session (${selectedExercises.length} exercise${selectedExercises.length > 1 ? "s" : ""})`}
+            </Button>
+          )}
         </div>
       )}
     </div>
