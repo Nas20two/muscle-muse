@@ -1,73 +1,108 @@
-# Welcome to your Lovable project
+# Muscle Muse — AI-Powered Fitness Tracker
 
-## Project info
+![App Screenshot](https://placeholder-screenshot.png)
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+> **Track workouts, monitor progress, and get AI-powered fitness insights.**
 
-## How can I edit this code?
+**🚀 Live Demo:** *Deploying soon*
 
-There are several ways of editing your application.
+## 🎯 What It Does
 
-**Use Lovable**
+Muscle Muse is a comprehensive fitness tracking application that helps users:
+- Log workouts with detailed exercise tracking
+- Monitor progress over time with visual analytics
+- Access workout inspiration and routines
+- Get personalized fitness insights
+- Manage fitness goals through onboarding flows
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## ✨ Features
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Workout Logging** — Track exercises, sets, reps, and weights
+- **Progress Analytics** — Visual charts showing strength gains over time
+- **AI-Powered Insights** — Smart recommendations based on workout patterns
+- **User Authentication** — Secure login/signup with Supabase
+- **Responsive Design** — Works on mobile and desktop
+- **Real-time Data** — Live updates with Supabase backend
 
-**Use your preferred IDE**
+## 🛠️ Tech Stack
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+| Layer | Technology |
+|-------|------------|
+| Frontend | React 18 + TypeScript |
+| Styling | Tailwind CSS + shadcn/ui |
+| State Management | React Query (TanStack Query) |
+| Routing | React Router |
+| Backend | Supabase (Auth + Database) |
+| Build Tool | Vite |
+| Notifications | Sonner + Toast |
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🚀 Deployment
 
-Follow these steps:
+### Prerequisites
+- Node.js 18+
+- Supabase account (for backend)
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+### Environment Variables
+Create `.env` file:
+```bash
+VITE_SUPABASE_PROJECT_ID=your_project_id
+VITE_SUPABASE_PUBLISHABLE_KEY=your_anon_key
+VITE_SUPABASE_URL=your_supabase_url
 ```
 
-**Edit a file directly in GitHub**
+### Local Development
+```bash
+# Install dependencies
+npm install
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+# Start dev server
+npm run dev
 
-**Use GitHub Codespaces**
+# Build for production
+npm run build
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Deploy to Vercel
+```bash
+# Install Vercel CLI
+npm i -g vercel
 
-## What technologies are used for this project?
+# Deploy
+vercel --prod
+```
 
-This project is built with:
+**Note:** Add environment variables in Vercel dashboard before deploying.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 📊 What I Learned
 
-## How can I deploy this project?
+Building Muscle Muse reinforced three key lessons:
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+1. **Auth flows need careful UX** — The protected route pattern with loading states prevents jarring redirects and gives users feedback during auth checks.
 
-## Can I connect a custom domain to my Lovable project?
+2. **Database design matters early** — Planning the Supabase schema upfront (users, workouts, exercises, progress) made the frontend implementation smoother. Retrofitting relationships later would have been painful.
 
-Yes, you can!
+3. **UI component libraries accelerate development** — Using shadcn/ui provided polished, accessible components out of the box. The time saved on styling allowed focus on core fitness tracking logic.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 🔮 Roadmap
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- [x] Core workout tracking
+- [x] User authentication
+- [x] Progress analytics
+- [ ] AI workout recommendations
+- [ ] Social features (share workouts)
+- [ ] Mobile app (React Native)
+- [ ] Integration with fitness wearables
+
+## 🤝 Why I Built This
+
+I'm transitioning to AI/ML roles and building a portfolio of production-ready applications. Muscle Muse demonstrates:
+- **Full-stack development** — React frontend + Supabase backend
+- **Authentication & security** — Protected routes, secure auth flows
+- **Data visualization** — Progress tracking with charts
+- **Real-world problem solving** — Actual fitness tracking workflows
+
+**Hiring?** Check out my other projects: [github.com/Nas20two](https://github.com/Nas20two)
+
+---
+
+Built with ❤️ by [NaSy](https://github.com/Nas20two)
