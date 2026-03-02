@@ -1,0 +1,5 @@
+{
+  "name": "IronFocus",
+  "description": "A minimalist, distraction-free gym workout tracker powered by Gemini. Features science-based 5-day splits, progressive overload tracking, and AI-generated custom routines.",
+  "requestFramePermissions": []
+}
